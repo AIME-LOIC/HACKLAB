@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hack Lab Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* Basic reset */
+    * {
+      box-sizing: border-box;
+    }
+    body, html {
+      margin: 0; padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0e0e0e;
+      color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column; /* Changed for mobile responsiveness */
+      overflow: hidden;
+    }
+
+    /* Sidebar - Desktop */
+    .sidebar {
+      width: 220px;
+      background-color: #1f1f2e;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 10px;
+      position: fixed; /* Keep sidebar fixed for desktop */
+      height: 100%;
+      left: 0;
+      top: 0;
+    }
+    .sidebar h2 {
+      font-size: 22px;
+      color: #b388ff;
+      margin-bottom: 20px;
+      text-align: center;
+      user-select: none;
+    }
+    .sidebar button {
+      background-color: transparent;
+      border: none;
+      color: white;
+      text-align: left;
+      padding: 12px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar button i {
+        width: 20px;
+        text-align: center;
+    }
+    .sidebar button:hover,
+    .sidebar button.active {
+      background-color: #673ab7;
+    }
+
+    /* Main Content - Desktop */
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      margin-left: 220px; /* Offset for sidebar */
+    }
+
+    /* Hide pages by default */
+    .page {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+    .page.active {
+      display: flex;
+    }
+
+    /* Dashboard */
+    #dashboard {
+      font-size: 1.5rem;
+      padding: 10px;
+    }
+
+    /* Chat */
+    .chat-container {
+      display: flex;
+      flex: 1;
+      height: 100%; /* Take full height of parent */
+      width: 100%;
+    }
+
+    /* Chat List - Desktop */
+    .chat-list {
+      width: 280px; /* Slightly wider for desktop */
+      background-color: #1a1a2e;
+      border-radius: 10px;
+      overflow-y: auto;
+      padding: 10px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-list div {
+      padding: 12px;
+      border-bottom: 1px solid #333;
+      cursor: pointer;
+      user-select: none;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      transition: background-color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chat-list div:last-child {
+      border-bottom: none;
+    }
+    .chat-list div.active {
+      background-color: #673ab7;
+    }
+    .chat-list div:hover {
+      background-color: #673ab7;
+    }
+    .chat-list .chat-item-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        background-color: #3f3f3f; /* Placeholder color */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        color: #ddd;
+    }
+
+    /* Chat Box - Desktop */
+    .chat-box {
+      flex: 1;
+      background-color: #121212;
+      border-radius: 10px;
+      padding: 20px; /* Reduced padding for more space */
+      display: flex;
+      flex-direction: column;
+      height: 100%; /* Take full height of parent */
+      overflow-y: auto;
+      margin-left: 20px; /* Spacing between list and box */
+      position: relative;
+    }
+    .chat-header {
+      background-color: #1f1f2e;
+      padding: 10px 15px;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+      font-weight: bold;
+      margin: -20px -20px 20px -20px; /* Adjust to sit at top of chat box */
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 1;
+    }
+    .chat-header .chat-item-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 0.9em;
+    }
+    .message {
+      background-color: #2c2c3c;
+      padding: 10px 15px;
+      margin-bottom: 8px;
+      border-radius: 15px; /* More rounded like WhatsApp */
+      max-width: 75%; /* Max width for message bubble */
+      word-wrap: break-word;
+      align-self: flex-start; /* Default alignment */
+      position: relative;
+      font-size: 0.95em;
+    }
+    .message.you {
+      background-color: #075e54; /* WhatsApp green */
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 3px; /* Pointy corner */
+    }
+    .message:not(.you) {
+        border-bottom-left-radius: 3px; /* Pointy corner */
+    }
+    .message img, .message video, .message audio {
+      max-width: 100%; /* Ensure media fits inside bubble */
+      border-radius: 8px; /* Slightly less rounded for media */
+      display: block;
+      margin-top: 5px;
+    }
+    .message .timestamp {
+        font-size: 0.7em;
+        color: rgba(255, 255, 255, 0.7);
+        text-align: right;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .chat-input {
+      margin-top: auto; /* Push to the bottom */
+      display: flex;
+      gap: 10px;
+      align-items: flex-end; /* Align items to the bottom */
+      padding-top: 10px;
+      border-top: 1px solid #1f1f2e;
+      background-color: #121212;
+      position: sticky; /* Keep at bottom */
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1;
+    }
+    .chat-input textarea {
+      flex: 1;
+      resize: none;
+      padding: 12px 15px; /* Increased padding */
+      border-radius: 20px; /* More rounded */
+      border: none;
+      font-size: 16px;
+      background-color: #2c2c3c; /* Darker input background */
+      color: white;
+      min-height: 40px; /* Smaller minimum height */
+      max-height: 120px; /* Limit height for long messages */
+      overflow-y: auto;
+    }
+    .chat-input input[type="file"] {
+      display: none; /* Hide default file input */
+    }
+    .chat-input .file-upload-label {
+      background-color: #673ab7;
+      color: white;
+      border-radius: 50%; /* Circular button */
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      font-size: 1.2em;
+      transition: background-color 0.3s;
+      flex-shrink: 0; /* Prevent shrinking */
+    }
+    .chat-input .file-upload-label:hover {
+      background-color: #512da8;
+    }
+    .chat-input button {
+      background-color: #673ab7; /* WhatsApp-like send button */
+      border: none;
+      padding: 10px; /* Smaller padding for circular button */
+      color: white;
+      border-radius: 50%; /* Circular button */
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0; /* Prevent shrinking */
+    }
+    .chat-input button:hover {
+      background-color: #512da8;
+    }
+
+    /* Search */
+    #search input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      background-color: #1f1f2e;
+      color: white;
+    }
+    #search button {
+      margin-top: 15px;
+      background-color: #673ab7;
+      border: none;
+      padding: 12px 20px;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+    }
+    #search button:hover {
+      background-color: #512da8;
+    }
+    #searchResults {
+      margin-top: 20px;
+      background-color: #1a1a2e;
+      border-radius: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    #searchResults div {
+      padding: 10px;
+      border-bottom: 1px solid #333;
+      cursor: pointer;
+      border-radius: 6px;
+      user-select: none;
+      transition: background-color 0.2s;
+    }
+    #searchResults div:last-child {
+      border-bottom: none;
+    }
+    #searchResults div:hover {
+      background-color: #673ab7;
+    }
+
+    /* Profile */
+    #profile .profile-pic {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #673ab7;
+      margin-bottom: 15px;
+      display: block; /* Center image */
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #profile textarea {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      background-color: #1f1f2e;
+      color: white;
+      resize: vertical;
+      min-height: 80px;
+      margin-bottom: 15px;
+    }
+    #profile input[type="file"] {
+      margin-bottom: 15px;
+      cursor: pointer;
+      background-color: #1f1f2e;
+      color: white;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+      width: 100%; /* Full width */
+    }
+    #profile button {
+      background-color: #673ab7;
+      border: none;
+      padding: 12px 20px;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%; /* Full width */
+    }
+    #profile button:hover {
+      background-color: #512da8;
+    }
+
+    /* Bottom Navigation - Mobile */
+    .bottom-nav {
+      display: none; /* Hidden by default */
+      background-color: #1f1f2e;
+      width: 100%;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      padding: 10px 0;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+      justify-content: space-around;
+      z-index: 1000;
+    }
+    .bottom-nav button {
+      background-color: transparent;
+      border: none;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 0.75em;
+      cursor: pointer;
+      padding: 5px 0;
+      border-radius: 8px;
+      transition: background-color 0.3s, color 0.3s;
+      flex: 1; /* Distribute space evenly */
+    }
+    .bottom-nav button i {
+      font-size: 1.4em;
+      margin-bottom: 5px;
+    }
+    .bottom-nav button.active {
+      color: #b388ff;
+    }
+    .bottom-nav button:hover {
+      background-color: #2c2c3c;
+    }
+
+    /* Media Queries for Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none; /* Hide sidebar on mobile */
+      }
+      .main-content {
+        margin-left: 0; /* Remove sidebar offset */
+        padding-bottom: 70px; /* Make space for bottom nav */
+      }
+      body {
+        flex-direction: column;
+      }
+      .bottom-nav {
+        display: flex; /* Show bottom nav on mobile */
+      }
+
+      /* Adjust chat for mobile */
+      .chat-container {
+        flex-direction: column; /* Stack chat list and chat box */
+        height: auto; /* Auto height */
+      }
+      .chat-list {
+        width: 100%; /* Full width */
+        border-radius: 0;
+        margin-bottom: 10px; /* Space between list and box */
+        height: auto;
+        min-height: 150px; /* Ensure list is visible */
+      }
+      .chat-box {
+        width: 100%; /* Full width */
+        border-radius: 0;
+        margin-left: 0;
+        margin-right: 0;
+        height: calc(100vh - 180px); /* Adjust height for chat box based on other elements */
+        max-height: calc(100vh - 180px);
+        flex: none; /* Prevent it from taking too much space */
+      }
+
+      /* Only show chat box when a chat is open on mobile */
+      #chat.page.active .chat-list {
+          display: none;
+      }
+      #chat.page.active .chat-box.active {
+          display: flex;
+          flex-direction: column;
+          flex: 1; /* Take remaining space */
+      }
+
+      /* When no chat selected, hide chat box and show list */
+      #chat.page.active .chat-box:not(.active) {
+          display: none;
+      }
+      #chat.page.active .chat-list:not(.hidden-on-chat-open) {
+          display: flex;
+          flex: 1; /* Take remaining space */
+          height: calc(100vh - 130px); /* Adjust height for full chat list view */
+      }
+
+
+      .chat-header {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        border-radius: 0;
+        margin: -20px -20px 20px -20px; /* Adjust to sit at top of chat box */
+      }
+      .chat-input {
+        padding: 10px;
+        border-radius: 0;
+        position: sticky; /* Keep at bottom */
+        bottom: 0;
+        background-color: #121212;
+      }
+      .message {
+        max-width: 85%; /* More space for messages */
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Hack Lab</h2>
+    <button id="nav-dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+    <button id="nav-chat"><i class="fas fa-comments"></i> Chat</button>
+    <button id="nav-code"><i class="fas fa-code"></i> Code Editor</button>
+    <button id="nav-search"><i class="fas fa-search"></i> Search</button>
+    <button id="nav-profile"><i class="fas fa-user"></i> Profile</button>
+    <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </div>
+
+  <div class="main-content">
+    
+    <div id="dashboard" class="page active">
+      <h1>Welcome back, {{ user.username }}</h1>
+      <p>{{ user.bio or 'No bio available.' }}</p>
+    </div>
+
+    
+    <div id="chat" class="page">
+      <div class="chat-container">
+        <div class="chat-list" id="chatList">
+            <button id="backToChatList" style="display: none; background-color: transparent; border: none; color: #b388ff; padding: 10px; text-align: left; font-size: 1.1em; cursor: pointer; align-items: center; gap: 5px;"><i class="fas fa-arrow-left"></i> Back</button>
+        </div>
+        <div class="chat-box" id="chatBox">
+            <div class="chat-header" id="chatHeader" style="display: none;">
+                <button class="back-to-chat-list-btn" style="background:none; border:none; color:white; font-size:1.2em; margin-right:10px; cursor:pointer;" onclick="hideChatBox()"><i class="fas fa-arrow-left"></i></button>
+                <div class="chat-item-avatar" id="chatHeaderAvatar"></div>
+                <span id="chatHeaderUsername"></span>
+            </div>
+        </div>
+      </div>
+      <form id="chatForm" class="chat-input" enctype="multipart/form-data" action="{{ url_for('send_message') }}" method="POST" style="display: none;">
+        <input type="hidden" name="recipient" id="recipientInput" />
+        <label for="media-upload" class="file-upload-label"><i class="fas fa-paperclip"></i></label>
+        <input type="file" id="media-upload" name="media" accept="image/*,video/*,audio/*" style="display: block;"/>
+        <textarea id="messageInput" name="message" placeholder="Message..." required></textarea>
+        <button type="submit"><i class="fas fa-paper-plane"></i></button>
+      </form>
+    </div>
+
+    
+    <div id="code" class="page">
+      <h3>Code Editor</h3>
+      <textarea rows="900" cols="900" placeholder="Write your code here..." style="background-color: #2c2c3c; color: lightgreen;"></textarea>
+    </div>
+
+    <div id="search" class="page">
+      <h3>Search Users</h3>
+      <input type="text" id="searchInput" placeholder="Search users by username..." />
+      <button id="searchBtn">Search</button>
+      <div id="searchResults"></div>
+    </div>
+
+    <div id="profile" class="page">
+      <h3>Your Profile</h3>
+      <img src="{{ url_for('static', filename='uploads/' + user.profile_pic) if user.profile_pic else url_for('static', filename='profile.jpg') }}" alt="Profile Picture" class="profile-pic" />
+      <form id="profileForm" action="{{ url_for('upload_profile_pic') }}" method="POST" enctype="multipart/form-data">
+        <textarea name="bio" id="bioInput" placeholder="Write your bio...">{{ user.bio }}</textarea>
+        <input type="file" name="profile_pic" accept="image/*" />
+        <button type="submit">Update Profile</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button id="nav-dashboard-mobile" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+    <button id="nav-chat-mobile"><i class="fas fa-comments"></i> Chat</button>
+    <button id="nav-code-mobile"><i class="fas fa-code"></i> Code</button>
+    <button id="nav-search-mobile"><i class="fas fa-search"></i> Search</button>
+    <button id="nav-profile-mobile"><i class="fas fa-user"></i> Profile</button>
+  </div>
+
+<script>
+  // Navigation
+  const pages = ['dashboard', 'chat', 'code', 'search', 'profile'];
+  const isMobile = window.innerWidth <= 768;
+
+  pages.forEach(p => {
+    // Desktop navigation
+    const desktopNavButton = document.getElementById('nav-' + p);
+    if (desktopNavButton) {
+        desktopNavButton.addEventListener('click', () => {
+            switchPage(p);
+        });
+    }
+
+    // Mobile navigation
+    const mobileNavButton = document.getElementById('nav-' + p + '-mobile');
+    if (mobileNavButton) {
+        mobileNavButton.addEventListener('click', () => {
+            switchPage(p);
+        });
+    }
+  });
+
+  function switchPage(pageName) {
+    pages.forEach(pg => {
+      document.getElementById(pg).classList.remove('active');
+      const desktopBtn = document.getElementById('nav-' + pg);
+      if (desktopBtn) desktopBtn.classList.remove('active');
+      const mobileBtn = document.getElementById('nav-' + pg + '-mobile');
+      if (mobileBtn) mobileBtn.classList.remove('active');
+    });
+    document.getElementById(pageName).classList.add('active');
+    const activeDesktopBtn = document.getElementById('nav-' + pageName);
+    if (activeDesktopBtn) activeDesktopBtn.classList.add('active');
+    const activeMobileBtn = document.getElementById('nav-' + pageName + '-mobile');
+    if (activeMobileBtn) activeMobileBtn.classList.add('active');
+
+    // Special handling for chat page on mobile
+    if (pageName === 'chat' && isMobile) {
+        // When chat is activated on mobile, show chat list by default, hide chat box elements
+        document.getElementById('chatBox').classList.remove('active');
+        document.getElementById('chatHeader').style.display = 'none';
+        document.getElementById('chatForm').style.display = 'none';
+        document.getElementById('chatList').classList.remove('hidden-on-chat-open'); // Ensure list is visible
+        document.getElementById('backToChatList').style.display = 'none'; // Hide back button for overall chat view
+    }
+  }
+
+  // Chat
+  const chatList = document.getElementById('chatList');
+  const chatBox = document.getElementById('chatBox');
+  const recipientInput = document.getElementById('recipientInput');
+  const messageInput = document.getElementById('messageInput');
+  const chatForm = document.getElementById('chatForm');
+  const chatHeader = document.getElementById('chatHeader');
+  const chatHeaderUsername = document.getElementById('chatHeaderUsername');
+  const chatHeaderAvatar = document.getElementById('chatHeaderAvatar');
+  const backToChatListBtn = document.getElementById('backToChatList');
+
+  let currentChatUser = null;
+
+  // Load chat users from backend chat_data passed in template (dict keyed by username)
+  const chatData = {{ chat_data | tojson }};
+  const loggedInUser = "{{ user.username }}";
+
+  // Fill chat list with users you chatted with or all users
+  const allUsers = {{ users|tojson }};
+  const chattedUsers = Object.keys(chatData);
+  chattedUsers.sort();
+
+  function getAvatarInitial(username) {
+    return username.charAt(0).toUpperCase();
+  }
+
+  function renderChatList() {
+    chatList.innerHTML = ''; // Clear existing list
+    const usersToDisplay = chattedUsers.length === 0 ? allUsers.map(u => u.username) : chattedUsers;
+
+    if (isMobile) {
+        backToChatListBtn.style.display = 'none'; // Initially hide back button
+        chatList.appendChild(backToChatListBtn); // Add it to the list container
+    }
+
+    usersToDisplay.forEach(username => {
+      const div = document.createElement('div');
+      div.classList.add('chat-item'); // Add a class for styling
+      div.innerHTML = `<div class="chat-item-avatar">${getAvatarInitial(username)}</div><span>${username}</span>`;
+      div.onclick = () => openChat(username, div);
+      chatList.appendChild(div);
+    });
+  }
+
+  renderChatList(); // Initial render of chat list
+
+  async function openChat(username, elem) {
+    [...chatList.querySelectorAll('.chat-item')].forEach(c => c.classList.remove('active'));
+    elem.classList.add('active');
+
+    recipientInput.value = username;
+    currentChatUser = username;
+    chatBox.innerHTML = ''; // Clear chat box
+    chatBox.prepend(chatHeader); // Put header back
+
+    chatHeaderUsername.textContent = username;
+    chatHeaderAvatar.textContent = getAvatarInitial(username);
+    
+    // Show chat box elements and hide list on mobile
+    if (isMobile) {
+        chatList.classList.add('hidden-on-chat-open'); // Hide the chat list
+        chatBox.classList.add('active'); // Show the chat box
+        chatHeader.style.display = 'flex';
+        chatForm.style.display = 'flex';
+    } else {
+        chatHeader.style.display = 'flex';
+        chatForm.style.display = 'flex';
+    }
+
+    // Load messages from API
+    const res = await fetch(`/api/get_messages/${username}`);
+    if (!res.ok) {
+      chatBox.innerHTML += '<p style="color: red; text-align: center;">Failed to load messages</p>';
+      return;
+    }
+    const messages = await res.json();
+
+    messages.forEach(msg => appendMessage(msg));
+    scrollToBottom();
+  }
+
+  function appendMessage(msg) {
+    const div = document.createElement('div');
+    div.classList.add('message');
+    if (msg.sender === loggedInUser) div.classList.add('you');
+
+    const contentDiv = document.createElement('div');
+    if (!msg.media_type || msg.media_type === 'text') {
+      contentDiv.textContent = msg.message;
+    } else {
+      if (msg.media_type === 'image') {
+        const img = document.createElement('img');
+        img.src = `/static/uploads/${msg.media_filename}`;
+        contentDiv.appendChild(img);
+      } else if (msg.media_type === 'video') {
+        const video = document.createElement('video');
+        video.src = `/static/uploads/${msg.media_filename}`;
+        video.controls = true;
+        contentDiv.appendChild(video);
+      } else if (msg.media_type === 'audio') {
+        const audio = document.createElement('audio');
+        audio.src = `/static/uploads/${msg.media_filename}`;
+        audio.controls = true;
+        contentDiv.appendChild(audio);
+      }
+      if (msg.message) {
+          const caption = document.createElement('div');
+          caption.textContent = msg.message;
+          caption.style.marginTop = '5px';
+          contentDiv.appendChild(caption);
+      }
+    }
+    div.appendChild(contentDiv);
+
+    // Add timestamp
+    const timestampSpan = document.createElement('span');
+    timestampSpan.classList.add('timestamp');
+    const date = new Date(msg.timestamp); // Assuming msg.timestamp is a valid date string
+    timestampSpan.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    div.appendChild(timestampSpan);
+
+    chatBox.appendChild(div);
+  }
+
+  function scrollToBottom() {
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  chatForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!currentChatUser) {
+      alert('Select a user to chat with first!');
+      return;
+    }
+
+    const formData = new FormData(chatForm);
+    const res = await fetch(chatForm.action, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      alert('Failed to send message.');
+      return;
+    }
+
+    const newMsg = await res.json();
+    appendMessage(newMsg);
+    scrollToBottom();
+    messageInput.value = '';
+    document.getElementById('media-upload').value = ''; // Clear file input
+  });
+
+  // Mobile specific chat functionality
+  if (isMobile) {
+      // Hide chat box initially on mobile for a "WhatsApp list view"
+      document.getElementById('chatBox').style.display = 'none';
+      document.getElementById('chatForm').style.display = 'none';
+
+      document.querySelector('.back-to-chat-list-btn').addEventListener('click', hideChatBox);
+  }
+
+  function hideChatBox() {
+      chatBox.classList.remove('active');
+      document.getElementById('chatBox').style.display = 'none';
+      document.getElementById('chatForm').style.display = 'none';
+      chatHeader.style.display = 'none';
+      chatList.classList.remove('hidden-on-chat-open'); // Show the chat list
+      document.getElementById('chatList').style.display = 'flex'; // Ensure flex display for the list
+  }
+
+
+  // Search functionality
+  const searchBtn = document.getElementById('searchBtn');
+  const searchInput = document.getElementById('searchInput');
+  const searchResults = document.getElementById('searchResults');
+
+  searchBtn.addEventListener('click', () => {
+    const query = searchInput.value.trim().toLowerCase();
+    searchResults.innerHTML = '';
+    if (!query) {
+      searchResults.innerHTML = '<div>Please enter a search query.</div>';
+      return;
+    }
+
+    const results = allUsers.filter(u => u.username.toLowerCase().includes(query));
+    if (results.length === 0) {
+      searchResults.innerHTML = '<div>No users found.</div>';
+      return;
+    }
+
+    results.forEach(user => {
+      const div = document.createElement('div');
+      div.textContent = user.username;
+      div.onclick = () => {
+        // Jump to chat tab and open chat with selected user
+        if (isMobile) {
+            document.getElementById('nav-chat-mobile').click();
+        } else {
+            document.getElementById('nav-chat').click();
+        }
+
+        // Find chat user div or create it if not found
+        let userDiv = [...chatList.querySelectorAll('.chat-item')].find(c => c.textContent.includes(user.username)); // Check for span content
+        if (!userDiv) {
+          userDiv = document.createElement('div');
+          userDiv.classList.add('chat-item');
+          userDiv.innerHTML = `<div class="chat-item-avatar">${getAvatarInitial(user.username)}</div><span>${user.username}</span>`;
+          userDiv.onclick = () => openChat(user.username, userDiv);
+          chatList.appendChild(userDiv);
+        }
+        openChat(user.username, userDiv);
+      };
+      searchResults.appendChild(div);
+    });
+  });
+
+  // Logout
+  function logout() {
+    window.location.href = "{{ url_for('logout') }}";
+  }
+
+  // Initial page load (ensure dashboard is active by default)
+  document.addEventListener('DOMContentLoaded', () => {
+      switchPage('dashboard');
+  });
+</script>
+</body>
+</html>

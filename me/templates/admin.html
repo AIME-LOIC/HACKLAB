@@ -1,0 +1,41 @@
+<!-- File: templates/admin.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel - HackLab</title>
+  <style>
+    body { background: #0e0e0e; color: white; font-family: sans-serif; }
+    .user { border-bottom: 1px solid #555; padding: 10px; }
+    .pending { color: red; }
+    .approved { color: green; }
+    .container { max-width: 800px; margin: auto; padding: 20px; }
+    a.button { background: #9b59b6; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Admin Panel</h1>
+    <h2>Users:</h2>
+    {% for user in users %}
+      <div class="user">
+        <strong>{{ user.username }}</strong> -
+        {% if user.approved %}
+          <span class="approved">Approved</span>
+        {% else %}
+          <span class="pending">Pending</span>
+          <a class="button" href="/approve/{{ user.username }}">Approve</a>
+        {% endif %}<br>
+        <small>{{ user.bio }}</small>
+      </div>
+    {% endfor %}
+
+    <h2>Teams:</h2>
+    {% for team in teams %}
+      <div class="user">
+        <strong>{{ team }}</strong>
+      </div>
+    {% endfor %}
+  </div>
+</body>
+</html>

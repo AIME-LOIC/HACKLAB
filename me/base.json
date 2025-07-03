@@ -1,0 +1,109 @@
+{
+    "users": [
+        {
+            "username": "i_m_luger47",
+            "password": "7f550a9f4c44173a37664d938f1355f0f92a47a7",
+            "bio": "bio",
+            "approved": true,
+            "team": "",
+            "uploads": [],
+            "profile_pic": "i_m_luger47_profile.jpg",
+            "joined": "02/07/2025  18:12:51",
+            "messages": []
+        },
+        {
+            "username": "admin",
+            "password": "84fd90cf9258edda4bace218b792bd0d8d4b33414bc73ef1a721c30b4766ff2d",
+            "description": "Admin account",
+            "approved": true,
+            "is_admin": true
+        },
+        {
+            "username": "Nora",
+            "password": "84e6b43a204cc64e4ef24fda849a906fc0f7b333",
+            "bio": "I love hacking and cybersecurity",
+            "approved": true,
+            "team": "",
+            "uploads": [],
+            "profile_pic": "",
+            "joined": "02/07/2025  18:36:04",
+            "messages": []
+        },
+        {
+            "username": "Travis",
+            "password": "f7c3bc1d808e04732adf679965ccc34ca7ae3441",
+            "bio": "Funny",
+            "approved": true,
+            "team": "",
+            "uploads": [],
+            "profile_pic": "",
+            "joined": "02/07/2025  18:43:54",
+            "messages": []
+        },
+        {
+            "username": "Lado",
+            "password": "01b307acba4f54f55aafc33bb06bbbf6ca803e9a",
+            "bio": "Incredibale",
+            "approved": true,
+            "team": "",
+            "uploads": [],
+            "profile_pic": "",
+            "joined": "02/07/2025  19:00:29",
+            "messages": []
+        }
+    ],
+    "teams": [],
+    "lessons": [],
+    "messages": [
+        {
+            "id": 1,
+            "sender": "i_m_luger47",
+            "recipient": "Lado",
+            "message": "hey",
+            "reply_to": null,
+            "media_type": "text",
+            "media_filename": "",
+            "timestamp": "03-07-2025 14:31:18"
+        },
+        {
+            "id": 2,
+            "sender": "i_m_luger47",
+            "recipient": "Lado",
+            "message": "testing",
+            "reply_to": null,
+            "media_type": "image",
+            "media_filename": "i_m_luger47_1751545893.07578_download.png",
+            "timestamp": "03-07-2025 14:31:33"
+        },
+        {
+            "id": 3,
+            "sender": "i_m_luger47",
+            "recipient": "Lado",
+            "message": "hey",
+            "reply_to": null,
+            "media_type": "text",
+            "media_filename": "",
+            "timestamp": "03-07-2025 15:59:57"
+        },
+        {
+            "id": 4,
+            "sender": "i_m_luger47",
+            "recipient": "Lado",
+            "message": "hey",
+            "reply_to": null,
+            "media_type": "text",
+            "media_filename": "",
+            "timestamp": "03-07-2025 15:59:57"
+        },
+        {
+            "id": 5,
+            "sender": "i_m_luger47",
+            "recipient": "Lado",
+            "message": "hey",
+            "reply_to": null,
+            "media_type": "text",
+            "media_filename": "",
+            "timestamp": "03-07-2025 15:59:57"
+        }
+    ]
+}
