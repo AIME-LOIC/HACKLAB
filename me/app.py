@@ -2,10 +2,20 @@ from flask import Flask,render_template,request,redirect,url_for,session,jsonify
 import os, json,hashlib
 from datetime import datetime,timedelta
 from werkzeug.utils import secure_filename
+from me.models import db, User, Upload, Team, Lesson, Message
+
 
 app=Flask(__name__)
 app.secret_key='hacklab.com'
 app.permanent_session_lifetime=timedelta(days=30)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hacklab.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
+
+@app.before_first_request
+def create_tables():
+    db.create_all()
+
 
 upload_folder='static/uploads'
 if not os.path.exists(upload_folder):
