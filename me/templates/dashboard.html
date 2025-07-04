@@ -490,12 +490,13 @@
   </style>
 </head>
 <body>
-  <div class="sidebar">
+    <div class="sidebar">
     <h2>Hack Lab</h2>
     <button id="nav-dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
     <button id="nav-chat"><i class="fas fa-comments"></i> Chat</button>
     <button id="nav-code"><i class="fas fa-code"></i> Code Editor</button>
     <button id="nav-search"><i class="fas fa-search"></i> Search</button>
+    <button id="nav-team"><i class="fas fa-users"></i> Team</button>
     <button id="nav-profile"><i class="fas fa-user"></i> Profile</button>
     <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
   </div>
@@ -533,7 +534,8 @@
     
     <div id="code" class="page">
       <h3>Code Editor</h3>
-      <textarea rows="900" cols="900" placeholder="Write your code here..." style="background-color: #2c2c3c; color: lightgreen;"></textarea>
+      <textarea id="mainCodeEditor" rows="20" cols="80" placeholder="Write your code here..." style="background-color: #2c2c3c; color: lightgreen;"></textarea>
+      <button onclick="shareCode()" style="margin-top: 10px;">Share This Code</button>
     </div>
 
     <div id="search" class="page">
@@ -541,6 +543,19 @@
       <input type="text" id="searchInput" placeholder="Search users by username..." />
       <button id="searchBtn">Search</button>
       <div id="searchResults"></div>
+    </div>
+
+    <div id="team" class="page">
+      <h3>Create or Join a Team</h3>
+      <form id="createTeamForm">
+        <input type="text" id="teamNameInput" placeholder="Enter Team Name..." required />
+        <button type="submit">Create Team</button>
+      </form>
+      <div id="teamLinkSection" style="display: none;">
+        <p>Share this link with friends to join your team:</p>
+        <input type="text" id="teamLink" readonly />
+        <button onclick="copyTeamLink()">Copy</button>
+      </div>
     </div>
 
     <div id="profile" class="page">
@@ -559,12 +574,13 @@
     <button id="nav-chat-mobile"><i class="fas fa-comments"></i> Chat</button>
     <button id="nav-code-mobile"><i class="fas fa-code"></i> Code</button>
     <button id="nav-search-mobile"><i class="fas fa-search"></i> Search</button>
+    <button id="nav-team-mobile"><i class="fas fa-users"></i> Team</button>
     <button id="nav-profile-mobile"><i class="fas fa-user"></i> Profile</button>
   </div>
 
 <script>
   // Navigation
-  const pages = ['dashboard', 'chat', 'code', 'search', 'profile'];
+  const pages = ['dashboard', 'chat', 'code', 'search','team', 'profile'];
   const isMobile = window.innerWidth <= 768;
 
   pages.forEach(p => {
@@ -826,6 +842,56 @@
       searchResults.appendChild(div);
     });
   });
+   document.getElementById('createTeamForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const teamName = document.getElementById('teamNameInput').value.trim();
+  if (!teamName) return;
+
+  // Send as form data, not JSON
+  const formData = new FormData();
+  formData.append('team_name', teamName);
+
+  const res = await fetch('/create_team', {  // backend endpoint
+    method: 'POST',
+    body: formData
+  });
+
+  if (res.ok) {
+    const data = await res.json();
+    // backend returns 'invite_link'
+    document.getElementById('teamLink').value = data.invite_link;
+    document.getElementById('teamLinkSection').style.display = 'block';
+  } else {
+    alert('Failed to create team');
+  }
+});
+
+function shareCode() {
+  const code = document.getElementById('mainCodeEditor').value;
+  const recipient = prompt("Enter the username to share code with:");
+  if (!recipient || !code) return;
+
+  // Send as form data, not JSON, and use correct keys
+  const formData = new FormData();
+  formData.append('recipient', recipient);
+  formData.append('code', code);
+
+  fetch('/send_code_share', {
+    method: 'POST',
+    body: formData
+  }).then(res => {
+    if (res.ok) alert('Code shared!');
+    else alert('Failed to share code');
+  });
+}
+
+
+  // Add logic in chat auto-fill editor if a shared code is received
+  if (window.sharedCode) {
+    const editor = document.getElementById('mainCodeEditor');
+    editor.value = window.sharedCode;
+    alert('A code snippet was shared with you and loaded into the editor.');
+  }
 
   // Logout
   function logout() {

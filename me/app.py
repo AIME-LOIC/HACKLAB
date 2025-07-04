@@ -3,7 +3,9 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import os, hashlib
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
-from models import db, User, Message
+from models import db, User, Message, Team, CodeShare
+
+import uuid
 
 app = Flask(__name__)
 app.secret_key = 'hacklab.com'
@@ -14,6 +16,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 with app.app_context():
+    
     db.create_all()
 
 UPLOAD_FOLDER = 'static/uploads'
@@ -83,6 +86,10 @@ def dashboard():
         return redirect(url_for('login'))
 
     current_user = User.query.filter_by(username=session['user']).first()
+    if not current_user:
+        # User in session not found in DB, clear session and redirect to login
+        session.clear()
+        return redirect(url_for('login'))
     users = User.query.filter(User.username != current_user.username).all()
 
     query = request.args.get('q', '').strip().lower()
@@ -226,6 +233,91 @@ def get_messages(username):
     ).all()
 
     return jsonify([{k: getattr(m, k) for k in ['id', 'sender', 'recipient', 'message', 'reply_to', 'media_type', 'media_filename', 'timestamp']} for m in messages])
+
+@app.route('/create_team', methods=['POST'])
+def create_team():
+    if 'user' not in session:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    team_name = request.form.get('team_name')
+    if not team_name:
+        return jsonify({'error': 'Team name required'}), 400
+
+    current_user = User.query.filter_by(username=session['user']).first()
+
+    invite_code = str(uuid.uuid4())
+
+    # Add invite_code to Team model if you haven't yet
+    team = Team(name=team_name, owner_username=current_user.username, invite_code=invite_code)
+    team.members.append(current_user)
+
+    db.session.add(team)
+    db.session.commit()
+
+    invite_link = url_for('join_team', invite_code=invite_code, _external=True)
+
+    return jsonify({'message': 'Team created', 'invite_link': invite_link})
+
+@app.route('/join_team/<invite_code>')
+def join_team(invite_code):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    current_user = User.query.filter_by(username=session['user']).first()
+    team = Team.query.filter_by(invite_code=invite_code).first()
+
+    if not team:
+        return "Invalid invite link", 404
+
+    if current_user not in team.members:
+        team.members.append(current_user)
+        db.session.commit()
+
+    return redirect(url_for('dashboard'))
+
+@app.route('/send_code_share', methods=['POST'])
+def send_code_share():
+    if 'user' not in session:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    sender = session['user']
+    recipient = request.form.get('recipient')
+    code = request.form.get('code')
+
+    if not recipient or not code:
+        return jsonify({'error': 'Recipient and code required'}), 400
+
+    recipient_user = User.query.filter_by(username=recipient).first()
+    if not recipient_user:
+        return jsonify({'error': 'Recipient user not found'}), 404
+
+    new_share = CodeShare(
+        sender_username=sender,
+        recipient_username=recipient,
+        code=code,
+        timestamp=datetime.utcnow()
+    )
+    db.session.add(new_share)
+    db.session.commit()
+
+    return jsonify({'message': 'Code shared successfully'})
+
+@app.route('/api/share_code')
+def get_code_shares():
+    if 'user' not in session:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    current_user = session['user']
+    shares = CodeShare.query.filter_by(recipient_username=current_user).order_by(CodeShare.timestamp.desc()).all()
+
+    result = [{
+        'id': s.id,
+        'sender': s.sender_username,
+        'code': s.code,
+        'timestamp': s.timestamp.strftime('%d-%m-%Y %H:%M:%S')
+    } for s in shares]
+
+    return jsonify(result)
 
 @app.route('/logout')
 def logout():
