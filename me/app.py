@@ -87,7 +87,7 @@ def dashboard():
 
     current_user = User.query.filter_by(username=session['user']).first()
     if not current_user:
-        # User in session not found in DB, clear session and redirect to login
+        
         session.clear()
         return redirect(url_for('login'))
     users = User.query.filter(User.username != current_user.username).all()
@@ -325,4 +325,4 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=2000)
+    app.run(debug=True, host='hacklab.com', port=2000)
