@@ -15,7 +15,7 @@ app.permanent_session_lifetime = timedelta(days=30)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 # Example PostgreSQL connection string (from hosting provider)
 # Example for PostgreSQL
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://hacklabdb_user:eNoPZlhCmOS1aLYGR8iNZXhrxKLI9WA4@host:5432/hacklabdb"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://hacklabdb_user:eNoPZlhCmOS1aLYGR8iNZXhrxKLI9WA4@dpg-d2vb2lp5pdvs73b8247g-a:5432/hacklabdb"
 
 
 
