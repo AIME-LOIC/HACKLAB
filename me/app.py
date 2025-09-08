@@ -10,13 +10,18 @@ import uuid
 app = Flask(__name__)
 app.secret_key = 'hacklab.com'
 app.permanent_session_lifetime = timedelta(days=30)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hacklab.db'
+
+# --- FIX: Use absolute path for persistent SQLite database ---
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+# Example PostgreSQL connection string (from hosting provider)
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://aime:aimeloic132@197.157.186.211:3306/hacklabdb"
+
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
 with app.app_context():
-    
     db.create_all()
 
 UPLOAD_FOLDER = 'static/uploads'
@@ -87,7 +92,6 @@ def dashboard():
 
     current_user = User.query.filter_by(username=session['user']).first()
     if not current_user:
-        
         session.clear()
         return redirect(url_for('login'))
     users = User.query.filter(User.username != current_user.username).all()
@@ -95,17 +99,14 @@ def dashboard():
     query = request.args.get('q', '').strip().lower()
     search_results = [u for u in users if query in u.username.lower()] if query else []
 
-    # Convert all users to dictionaries
     serialized_users = []
     for u in users:
         serialized_users.append({
-            
             'username': u.username,
             'bio': u.bio,
             'profile_pic': u.profile_pic,
         })
 
-    # Messages serialization
     messages = Message.query.all()
     chat_data = {}
     for msg in messages:
@@ -247,7 +248,6 @@ def create_team():
 
     invite_code = str(uuid.uuid4())
 
-    # Add invite_code to Team model if you haven't yet
     team = Team(name=team_name, owner_username=current_user.username, invite_code=invite_code)
     team.members.append(current_user)
 
