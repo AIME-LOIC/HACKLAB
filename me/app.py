@@ -14,7 +14,9 @@ app.permanent_session_lifetime = timedelta(days=30)
 # --- FIX: Use absolute path for persistent SQLite database ---
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 # Example PostgreSQL connection string (from hosting provider)
-app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://aime:aimeloic132@197.157.186.211:3306/hacklabdb"
+# Example for PostgreSQL
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://hacklabdb_user:eNoPZlhCmOS1aLYGR8iNZXhrxKLI9WA4@host:5432/hacklabdb"
+
 
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
