@@ -7,18 +7,22 @@ from models import db, User, Message, Team, CodeShare, Lesson
 
 import uuid
 
+
 app = Flask(__name__)
 app.secret_key = 'hacklab.com'
 app.permanent_session_lifetime = timedelta(days=30)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-# Only set DB config and create_all if running as main (production)
+# Always set DB config and initialize SQLAlchemy
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'hacklab.db'))
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
+
+# Only create tables and run server if running locally
 if __name__ == '__main__':
-    app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://hacklabdb_user:eNoPZlhCmOS1aLYGR8iNZXhrxKLI9WA4@dpg-d2vb2lp5pdvs73b8247g-a:5432/hacklabdb"
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    db.init_app(app)
     with app.app_context():
         db.create_all()
+    app.run(debug=True, host='hacklab.com', port=2000)
 
 UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
