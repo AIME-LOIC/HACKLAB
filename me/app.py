@@ -1,3 +1,4 @@
+
 # app.py
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import os, hashlib
@@ -80,6 +81,39 @@ def set_team_role(team_id, username):
         db.session.commit()
     return redirect(url_for('manage_team', team_id=team_id))
 
+# Route: My Teams (dashboard section)
+@app.route('/my_teams')
+def my_teams():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    username = session['user']
+    # Get all teams where user is a member (via TeamMemberRole)
+    roles = TeamMemberRole.query.filter_by(user_username=username).all()
+    my_teams = []
+    for r in roles:
+        t = Team.query.get(r.team_id)
+        if t:
+            my_teams.append({'id': t.id, 'name': t.name, 'role': r.role})
+    # Get pending join requests
+    pending = TeamJoinRequest.query.filter_by(user_username=username, status='pending').all()
+    pending_requests = []
+    for req in pending:
+        team = Team.query.get(req.team_id)
+        if team:
+            pending_requests.append({'id': req.id, 'team_name': team.name})
+    return render_template('my_teams.html', my_teams=my_teams, pending_requests=pending_requests)
+
+# Route: Cancel join request
+@app.route('/cancel_join_request/<int:req_id>', methods=['POST'])
+def cancel_join_request(req_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    req = TeamJoinRequest.query.get_or_404(req_id)
+    if req.user_username != session['user']:
+        return "Forbidden", 403
+    db.session.delete(req)
+    db.session.commit()
+    return redirect(url_for('my_teams'))
 import uuid
 
 

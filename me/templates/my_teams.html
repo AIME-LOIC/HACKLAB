@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>My Teams</h2>
+<ul>
+  {% for team in my_teams %}
+    <li>{{ team.name }}
+      {% if team.role in ['owner', 'staff'] %}
+        <a href="/team/{{ team.id }}/manage">Manage</a>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+<h3>Pending Join Requests</h3>
+<ul>
+  {% for req in pending_requests %}
+    <li>{{ req.team_name }} (pending)
+      <form action="/cancel_join_request/{{ req.id }}" method="post" style="display:inline;">
+        <button type="submit">Cancel</button>
+      </form>
+    </li>
+  {% endfor %}
+</ul>
+<a href="/teams"><button>Join a Team</button></a>
+{% endblock %}
