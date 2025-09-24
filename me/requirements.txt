@@ -19,3 +19,4 @@ sswg==4.3.0
 typing_extensions==4.15.0
 ursina==8.1.1
 Werkzeug==3.1.3
+gunicorn 
