@@ -532,17 +532,6 @@
         <p>No courses available yet.</p>
       {% endif %}
 
-      <h2>All Users (for Chat/Search)</h2>
-      <ul style="list-style:none; padding:0;">
-      {% for u in users %}
-        <li style="background:#222; margin-bottom:6px; padding:8px; border-radius:6px;">
-          <span style="font-weight:bold;">{{ u.username }}</span>
-          <span style="color:#888; font-size:0.9em;">{{ u.bio }}</span>
-          <a href="#" onclick="document.getElementById('nav-chat').click(); setTimeout(()=>{openChat('{{ u.username }}', null)}, 300); return false;" style="margin-left:10px; color:#b388ff;">Chat</a>
-          <a href="#" onclick="document.getElementById('nav-search').click(); document.getElementById('searchInput').value='{{ u.username }}'; document.getElementById('searchBtn').click(); return false;" style="margin-left:10px; color:#4caf50;">Search</a>
-        </li>
-      {% endfor %}
-      </ul>
     </div>
 
     
@@ -580,6 +569,16 @@
       <input type="text" id="searchInput" placeholder="Search users by username..." />
       <button id="searchBtn">Search</button>
       <div id="searchResults"></div>
+      <h4 style="margin-top:30px;">All Users</h4>
+      <ul style="list-style:none; padding:0;">
+      {% for u in users %}
+        <li style="background:#222; margin-bottom:6px; padding:8px; border-radius:6px;">
+          <span style="font-weight:bold;">{{ u.username }}</span>
+          <span style="color:#888; font-size:0.9em;">{{ u.bio }}</span>
+          <a href="#" onclick="document.getElementById('nav-chat').click(); setTimeout(()=>{openChat('{{ u.username }}')}, 300); return false;" style="margin-left:10px; color:#b388ff;">Chat</a>
+        </li>
+      {% endfor %}
+      </ul>
     </div>
 
     <div id="team" class="page">
@@ -717,7 +716,7 @@
 
   async function openChat(username, elem) {
     [...chatList.querySelectorAll('.chat-item')].forEach(c => c.classList.remove('active'));
-    elem.classList.add('active');
+    if (elem) elem.classList.add('active');
 
     recipientInput.value = username;
     currentChatUser = username;

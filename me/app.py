@@ -1,3 +1,5 @@
+from flask import send_from_directory
+
 # ...existing code...
 
 # app.py
@@ -377,6 +379,11 @@ def upload_profile_pic():
         db.session.commit()
         return redirect(url_for('dashboard'))
     return render_template('wrong.html'), 400
+
+# Serve uploaded files from /static/uploads/ for preview/download (fix 404)
+@app.route('/static/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 if __name__ == '__main__':
     app.run(debug=True, host='hacklab.com', port=2000)
