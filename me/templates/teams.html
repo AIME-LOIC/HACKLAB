@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>All Teams</h2>
+<ul>
+  {% for team in teams %}
+    <li>{{ team.name }}
+      <form action="/team/{{ team.id }}/request_join" method="post" style="display:inline;">
+        <button type="submit">Request to Join</button>
+      </form>
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

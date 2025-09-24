@@ -4,11 +4,86 @@ import os, hashlib
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from models import db, User, Message, Team, CodeShare, Lesson
+from models import TeamJoinRequest, TeamMemberRole
+app = Flask(__name__)
+# Helper: get user role in a team
+def get_user_team_role(username, team_id):
+    role = TeamMemberRole.query.filter_by(user_username=username, team_id=team_id).first()
+    return role.role if role else None
+
+# Route: List all teams (public)
+@app.route('/teams')
+def list_teams():
+    teams = Team.query.all()
+    return render_template('teams.html', teams=teams)
+
+# Route: Request to join a team
+@app.route('/team/<int:team_id>/request_join', methods=['POST'])
+def request_join_team(team_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    existing = TeamJoinRequest.query.filter_by(user_username=session['user'], team_id=team_id, status='pending').first()
+    if existing:
+        return "You already have a pending request."
+    req = TeamJoinRequest(user_username=session['user'], team_id=team_id)
+    db.session.add(req)
+    db.session.commit()
+    return redirect(url_for('list_teams'))
+
+# Route: Approve or deny join request (owner/staff only)
+@app.route('/team/<int:team_id>/handle_request/<int:req_id>', methods=['POST'])
+def handle_join_request(team_id, req_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    role = get_user_team_role(session['user'], team_id)
+    if role not in ['owner', 'staff']:
+        return "Forbidden", 403
+    req = TeamJoinRequest.query.get_or_404(req_id)
+    action = request.form.get('action')
+    if action == 'approve':
+        req.status = 'approved'
+        # Add to TeamMemberRole
+        member = TeamMemberRole(user_username=req.user_username, team_id=team_id, role='member')
+        db.session.add(member)
+    elif action == 'deny':
+        req.status = 'denied'
+    db.session.commit()
+    return redirect(url_for('manage_team', team_id=team_id))
+
+# Route: Manage team (owner/staff)
+@app.route('/team/<int:team_id>/manage')
+def manage_team(team_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    role = get_user_team_role(session['user'], team_id)
+    if role not in ['owner', 'staff']:
+        return "Forbidden", 403
+    team = Team.query.get_or_404(team_id)
+    requests = TeamJoinRequest.query.filter_by(team_id=team_id, status='pending').all()
+    members = TeamMemberRole.query.filter_by(team_id=team_id).all()
+    return render_template('manage_team.html', team=team, requests=requests, members=members)
+
+# Route: Assign staff/owner role (owner only)
+@app.route('/team/<int:team_id>/set_role/<username>', methods=['POST'])
+def set_team_role(team_id, username):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    role = get_user_team_role(session['user'], team_id)
+    if role != 'owner':
+        return "Forbidden", 403
+    member = TeamMemberRole.query.filter_by(user_username=username, team_id=team_id).first()
+    if not member:
+        return "User not found in team", 404
+    new_role = request.form.get('role')
+    if new_role in ['owner', 'staff', 'member']:
+        member.role = new_role
+        db.session.commit()
+    return redirect(url_for('manage_team', team_id=team_id))
 
 import uuid
 
 
-app = Flask(__name__)
+
 app.secret_key = 'hacklab.com'
 app.permanent_session_lifetime = timedelta(days=30)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))

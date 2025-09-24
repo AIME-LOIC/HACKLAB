@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Manage Team: {{ team.name }}</h2>
+<h3>Pending Join Requests</h3>
+<ul>
+  {% for req in requests %}
+    <li>{{ req.user_username }}
+      <form action="/team/{{ team.id }}/handle_request/{{ req.id }}" method="post" style="display:inline;">
+        <button name="action" value="approve" type="submit">Approve</button>
+        <button name="action" value="deny" type="submit">Deny</button>
+      </form>
+    </li>
+  {% endfor %}
+</ul>
+<h3>Members</h3>
+<ul>
+  {% for member in members %}
+    <li>{{ member.user_username }} ({{ member.role }})
+      {% if member.role != 'owner' %}
+      <form action="/team/{{ team.id }}/set_role/{{ member.user_username }}" method="post" style="display:inline;">
+        <select name="role">
+          <option value="member" {% if member.role == 'member' %}selected{% endif %}>Member</option>
+          <option value="staff" {% if member.role == 'staff' %}selected{% endif %}>Staff</option>
+        </select>
+        <button type="submit">Set Role</button>
+      </form>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

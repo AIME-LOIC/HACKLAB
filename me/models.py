@@ -1,3 +1,5 @@
+# Team join request model for Discord-like workflow
+  # owner, staff, member
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -68,3 +70,16 @@ class Message(db.Model):
     timestamp = db.Column(db.String(50), default=datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S'))
 
 
+class TeamJoinRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_username = db.Column(db.String(100), db.ForeignKey('user.username'), nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
+    status = db.Column(db.String(20), default='pending')  # pending, approved, denied
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+# Add team role support (owner, staff, member)
+class TeamMemberRole(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_username = db.Column(db.String(100), db.ForeignKey('user.username'), nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
+    role = db.Column(db.String(20), default='member')
