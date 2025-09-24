@@ -907,20 +907,29 @@ function openFullscreen(iframeId) {
 });
   // Fetch and show all teams for join requests
   async function loadAllTeams() {
-    const res = await fetch('/teams');
+    const res = await fetch('/api/teams');
     if (!res.ok) return;
-    const html = await res.text();
-    // Parse the HTML and extract the team list
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    const teamLis = tempDiv.querySelectorAll('ul li');
+    const teams = await res.json();
     const allTeamsList = document.getElementById('allTeamsList');
     allTeamsList.innerHTML = '';
-    teamLis.forEach(li => {
+    teams.forEach(team => {
+      const li = document.createElement('li');
+      li.textContent = team.name + ' ';
+      const btn = document.createElement('button');
+      btn.textContent = 'Request to Join';
+      btn.onclick = async () => {
+        const joinRes = await fetch(`/team/${team.id}/request_join`, {method: 'POST'});
+        if (joinRes.ok) {
+          btn.textContent = 'Requested!';
+          btn.disabled = true;
+        } else {
+          btn.textContent = 'Error';
+        }
+      };
+      li.appendChild(btn);
       allTeamsList.appendChild(li);
     });
   }
-  // Only load teams when Team tab is shown
   document.getElementById('nav-team').addEventListener('click', loadAllTeams);
   document.getElementById('nav-team-mobile').addEventListener('click', loadAllTeams);
 function shareCode() {
