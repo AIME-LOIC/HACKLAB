@@ -90,8 +90,10 @@ def register():
 
 @app.route('/dashboard')
 def dashboard():
-    if 'user' not in session or session.get('is_admin'):
+    if 'user' not in session:
         return redirect(url_for('login'))
+    if session.get('is_admin'):
+        return redirect(url_for('admin'))
 
     current_user = User.query.filter_by(username=session['user']).first()
     if not current_user:
