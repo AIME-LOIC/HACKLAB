@@ -497,7 +497,6 @@
   <button id="nav-code"><i class="fas fa-code"></i> Code Editor</button>
   <button id="nav-search"><i class="fas fa-search"></i> Search</button>
   <button id="nav-team"><i class="fas fa-users"></i> Team</button>
-  <a href="/my_teams"><button type="button"><i class="fas fa-layer-group"></i> My Teams</button></a>
   <button id="nav-profile"><i class="fas fa-user"></i> Profile</button>
   <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
   </div>
@@ -600,7 +599,11 @@ function openFullscreen(iframeId) {
 
     <div id="profile" class="page">
       <h3>Your Profile</h3>
-      <img src="{{ url_for('static', filename='uploads/' + user.profile_pic) if user.profile_pic else url_for('static', filename='profile.jpg') }}" alt="Profile Picture" class="profile-pic" />
+      {% if user.profile_pic %}
+        <img src="{{ url_for('static', filename='uploads/' + user.profile_pic) }}" alt="Profile Picture" class="profile-pic" />
+      {% else %}
+        <div class="profile-pic" style="background:#333;display:flex;align-items:center;justify-content:center;font-size:2em;">{{ user.username[0]|upper }}</div>
+      {% endif %}
       <form id="profileForm" action="{{ url_for('upload_profile_pic') }}" method="POST" enctype="multipart/form-data">
         <textarea name="bio" id="bioInput" placeholder="Write your bio...">{{ user.bio }}</textarea>
         <input type="file" name="profile_pic" accept="image/*" />
@@ -681,11 +684,13 @@ function openFullscreen(iframeId) {
 
 
   // Load chat users from backend chat_data passed in template (dict keyed by username)
-  const chatData = JSON.parse('{{ chat_data | tojson | safe }}');
+  let chatData = {};
+  try { chatData = JSON.parse('{{ chat_data | tojson | safe }}'); } catch(e) { chatData = {}; }
   const loggedInUser = "{{ user.username }}";
 
   // Fill chat list with users you chatted with or all users
-  const allUsers = JSON.parse('{{ users|tojson | safe }}');
+  let allUsers = [];
+  try { allUsers = JSON.parse('{{ users|tojson | safe }}'); } catch(e) { allUsers = []; }
   const chattedUsers = Object.keys(chatData);
   chattedUsers.sort();
 
