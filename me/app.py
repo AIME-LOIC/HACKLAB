@@ -99,13 +99,15 @@ def dashboard():
     if not current_user:
         session.clear()
         return redirect(url_for('login'))
-    users = User.query.filter(User.username != current_user.username, User.approved == True).all()
+    # Use same logic as admin: get all users, but only show approved for chat/search
+    all_users = User.query.all()
+    approved_users = [u for u in all_users if u.approved and u.username != current_user.username]
 
     query = request.args.get('q', '').strip().lower()
-    search_results = [u for u in users if query in u.username.lower()] if query else []
+    search_results = [u for u in approved_users if query in u.username.lower()] if query else []
 
     serialized_users = []
-    for u in users:
+    for u in approved_users:
         serialized_users.append({
             'username': u.username,
             'bio': u.bio,

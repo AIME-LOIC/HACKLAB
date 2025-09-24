@@ -505,7 +505,6 @@
     
     <div id="dashboard" class="page active">
       <h1>Welcome back, {{ user.username }}</h1>
-      <!-- <p>{{ user.bio or 'No bio available.' }}</p> -->
       <h2>Courses</h2>
       {% if courses %}
         <ul style="list-style:none; padding:0;">
@@ -514,25 +513,12 @@
             <strong>{{ course.title }}</strong><br>
             <span style="font-size:0.95em; color:#ccc;">{{ course.content[:120] }}{% if course.content|length > 120 %}...{% endif %}</span>
             {% if course.file_name %}
+              <div style="color:orange; font-size:0.8em;">file_name: {{ course.file_name }} | iframe src: {{ url_for('static', filename='uploads/' + course.file_name) }}</div>
               {% if course.file_type in ['pdf', 'txt'] %}
                 <div style="margin:10px 0; position:relative;">
                   <iframe id="preview-{{ course.id }}" src="{{ url_for('static', filename='uploads/' + course.file_name) }}" style="width:100%; min-height:350px; border:1px solid #444; background:#222;"></iframe>
                   <button type="button" onclick="openFullscreen('preview-{{ course.id }}')" style="position:absolute; top:10px; right:10px; z-index:2; background:#673ab7; color:white; border:none; border-radius:4px; padding:4px 10px; cursor:pointer;">Full Screen</button>
                 </div>
-<script>
-function openFullscreen(iframeId) {
-  var iframe = document.getElementById(iframeId);
-  if (iframe.requestFullscreen) {
-    iframe.requestFullscreen();
-  } else if (iframe.mozRequestFullScreen) { /* Firefox */
-    iframe.mozRequestFullScreen();
-  } else if (iframe.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
-    iframe.webkitRequestFullscreen();
-  } else if (iframe.msRequestFullscreen) { /* IE/Edge */
-    iframe.msRequestFullscreen();
-  }
-}
-</script>
               {% elif course.file_type in ['docx', 'pptx'] %}
                 <div style="margin:10px 0; color:#b388ff;">Preview not supported. Please download to view.</div>
               {% endif %}
@@ -545,6 +531,18 @@ function openFullscreen(iframeId) {
       {% else %}
         <p>No courses available yet.</p>
       {% endif %}
+
+      <h2>All Users (for Chat/Search)</h2>
+      <ul style="list-style:none; padding:0;">
+      {% for u in users %}
+        <li style="background:#222; margin-bottom:6px; padding:8px; border-radius:6px;">
+          <span style="font-weight:bold;">{{ u.username }}</span>
+          <span style="color:#888; font-size:0.9em;">{{ u.bio }}</span>
+          <a href="#" onclick="document.getElementById('nav-chat').click(); setTimeout(()=>{openChat('{{ u.username }}', null)}, 300); return false;" style="margin-left:10px; color:#b388ff;">Chat</a>
+          <a href="#" onclick="document.getElementById('nav-search').click(); document.getElementById('searchInput').value='{{ u.username }}'; document.getElementById('searchBtn').click(); return false;" style="margin-left:10px; color:#4caf50;">Search</a>
+        </li>
+      {% endfor %}
+      </ul>
     </div>
 
     
