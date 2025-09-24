@@ -99,7 +99,7 @@ def dashboard():
     if not current_user:
         session.clear()
         return redirect(url_for('login'))
-    users = User.query.filter(User.username != current_user.username).all()
+    users = User.query.filter(User.username != current_user.username, User.approved == True).all()
 
     query = request.args.get('q', '').strip().lower()
     search_results = [u for u in users if query in u.username.lower()] if query else []
