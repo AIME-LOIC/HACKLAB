@@ -3,34 +3,28 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import os, hashlib
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
-from models import db, User, Message, Team, CodeShare
+from models import db, User, Message, Team, CodeShare, Lesson
 
 import uuid
 
 app = Flask(__name__)
 app.secret_key = 'hacklab.com'
 app.permanent_session_lifetime = timedelta(days=30)
-
-# --- FIX: Use absolute path for persistent SQLite database ---
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-# Example PostgreSQL connection string (from hosting provider)
-# Example for PostgreSQL
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://hacklabdb_user:eNoPZlhCmOS1aLYGR8iNZXhrxKLI9WA4@dpg-d2vb2lp5pdvs73b8247g-a:5432/hacklabdb"
 
-
-
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-db.init_app(app)
-
-with app.app_context():
-    db.create_all()
+# Only set DB config and create_all if running as main (production)
+if __name__ == '__main__':
+    app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://hacklabdb_user:eNoPZlhCmOS1aLYGR8iNZXhrxKLI9WA4@dpg-d2vb2lp5pdvs73b8247g-a:5432/hacklabdb"
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
 
 UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-ALLOWED_EXTENSIONS = {'png', 'jpeg', 'jpg', 'gif', 'mp4', 'mp3', 'wav', 'ogg'}
+ALLOWED_EXTENSIONS = {'png', 'jpeg', 'jpg', 'gif', 'mp4', 'mp3', 'wav', 'ogg', 'pdf', 'docx', 'pptx', 'txt'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -39,7 +33,7 @@ def hash_pass(p):
     return hashlib.sha1(p.encode()).hexdigest()
 
 ADMIN_USERNAME = 'admin'
-ADMIN_PASSWORD = hash_pass('admin123')
+ADMIN_PASSWORD = hash_pass('hacklab@2025')
 
 @app.route('/')
 def index():
@@ -134,11 +128,13 @@ def dashboard():
             chat_data[partner] = []
         chat_data[partner].append(msg_dict)
 
+    courses = Lesson.query.order_by(Lesson.created_at.desc()).all()
     return render_template('dashboard.html',
                            user=current_user,
                            users=serialized_users,
                            search_results=search_results,
-                           chat_data=chat_data)
+                           chat_data=chat_data,
+                           courses=courses)
 
 @app.route('/admin')
 def admin():
@@ -146,7 +142,60 @@ def admin():
         return redirect(url_for('login'))
 
     users = User.query.all()
-    return render_template('admin.html', users=users)
+    teams = Team.query.all()
+    courses = Lesson.query.order_by(Lesson.created_at.desc()).all()
+    return render_template('admin.html', users=users, teams=teams, courses=courses)
+
+
+# Add route for admin to add a course (with file upload)
+@app.route('/add_course', methods=['POST'])
+def add_course():
+    if 'user' not in session or not session.get('is_admin'):
+        return redirect(url_for('login'))
+    title = request.form.get('title')
+    content = request.form.get('content')
+    file = request.files.get('course_file')
+    file_name = None
+    file_type = None
+    if file and allowed_file(file.filename):
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        file_type = ext
+        safe_name = secure_filename(f"course_{datetime.now().timestamp()}_{file.filename}")
+        file.save(os.path.join(UPLOAD_FOLDER, safe_name))
+        file_name = safe_name
+    lesson = Lesson(title=title, content=content, file_name=file_name, file_type=file_type)
+    db.session.add(lesson)
+    db.session.commit()
+    return redirect(url_for('admin'))
+
+# Admin: Delete course
+@app.route('/delete_course/<int:course_id>', methods=['POST'])
+def delete_course(course_id):
+    if 'user' not in session or not session.get('is_admin'):
+        return redirect(url_for('login'))
+    lesson = Lesson.query.get(course_id)
+    if lesson:
+        # Optionally delete file from disk
+        if lesson.file_name:
+            try:
+                os.remove(os.path.join(UPLOAD_FOLDER, lesson.file_name))
+            except Exception:
+                pass
+        db.session.delete(lesson)
+        db.session.commit()
+    return redirect(url_for('admin'))
+
+# Admin: Delete user
+@app.route('/delete_user/<username>', methods=['POST'])
+def delete_user(username):
+    if 'user' not in session or not session.get('is_admin'):
+        return redirect(url_for('login'))
+    user = User.query.filter_by(username=username).first()
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+    return redirect(url_for('admin'))
+
 
 @app.route('/approve/<username>')
 def approve_user(username):
@@ -158,30 +207,7 @@ def approve_user(username):
         db.session.commit()
     return redirect(url_for('admin'))
 
-@app.route('/upload_profile_pic', methods=['POST'])
-def upload_profile_pic():
-    if 'user' not in session or session.get('is_admin'):
-        return redirect(url_for('login'))
-    file = request.files.get('profile_pic')
-    if file and allowed_file(file.filename):
-        filename = secure_filename(f"{session['user']}_profile.{file.filename.rsplit('.', 1)[1].lower()}")
-        filepath = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(filepath)
-        user = User.query.filter_by(username=session['user']).first()
-        user.profile_pic = filename
-        db.session.commit()
-        return redirect(url_for('dashboard'))
-    return render_template('wrong.html'), 400
-
-@app.route('/update_bio', methods=['POST'])
-def update_bio():
-    if 'user' not in session or session.get('is_admin'):
-        return redirect(url_for('login'))
-    user = User.query.filter_by(username=session['user']).first()
-    user.bio = request.form['bio']
-    db.session.commit()
-    return redirect(url_for('dashboard'))
-
+# Restore send_message route
 @app.route('/send_message', methods=['POST'])
 def send_message():
     if 'user' not in session:
@@ -205,7 +231,7 @@ def send_message():
         ext = filename.rsplit('.', 1)[1].lower()
         if ext in ['png', 'jpg', 'jpeg', 'gif']:
             media_type = 'image'
-        elif ext in ['mp4']:
+        elif ext == 'mp4':
             media_type = 'video'
         elif ext in ['mp3', 'wav', 'ogg']:
             media_type = 'audio'
@@ -325,6 +351,21 @@ def get_code_shares():
 def logout():
     session.clear()
     return redirect(url_for('index'))
+
+@app.route('/upload_profile_pic', methods=['POST'])
+def upload_profile_pic():
+    if 'user' not in session or session.get('is_admin'):
+        return redirect(url_for('login'))
+    file = request.files.get('profile_pic')
+    if file and allowed_file(file.filename):
+        filename = secure_filename(f"{session['user']}_profile.{file.filename.rsplit('.', 1)[1].lower()}")
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(filepath)
+        user = User.query.filter_by(username=session['user']).first()
+        user.profile_pic = filename
+        db.session.commit()
+        return redirect(url_for('dashboard'))
+    return render_template('wrong.html'), 400
 
 if __name__ == '__main__':
     app.run(debug=True, host='hacklab.com', port=2000)

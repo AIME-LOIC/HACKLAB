@@ -53,6 +53,8 @@ class Lesson(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200))
     content = db.Column(db.Text)
+    file_name = db.Column(db.String(200))  # For uploaded file (pdf/docx/etc)
+    file_type = db.Column(db.String(20))   # pdf, docx, etc
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Message(db.Model):

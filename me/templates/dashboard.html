@@ -492,7 +492,7 @@
 <body>
     <div class="sidebar">
     <h2>Hack Lab</h2>
-    <button id="nav-dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+    <button id="nav-dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Home</button>
     <button id="nav-chat"><i class="fas fa-comments"></i> Chat</button>
     <button id="nav-code"><i class="fas fa-code"></i> Code Editor</button>
     <button id="nav-search"><i class="fas fa-search"></i> Search</button>
@@ -506,6 +506,45 @@
     <div id="dashboard" class="page active">
       <h1>Welcome back, {{ user.username }}</h1>
       <p>{{ user.bio or 'No bio available.' }}</p>
+      <h2>Courses</h2>
+      {% if courses %}
+        <ul style="list-style:none; padding:0;">
+        {% for course in courses %}
+          <li style="background:#1a1a2e; margin-bottom:10px; padding:10px; border-radius:8px;">
+            <strong>{{ course.title }}</strong><br>
+            <span style="font-size:0.95em; color:#ccc;">{{ course.content[:120] }}{% if course.content|length > 120 %}...{% endif %}</span>
+            {% if course.file_name %}
+              {% if course.file_type in ['pdf', 'txt'] %}
+                <div style="margin:10px 0; position:relative;">
+                  <iframe id="preview-{{ course.id }}" src="{{ url_for('static', filename='uploads/' + course.file_name) }}" style="width:100%; min-height:350px; border:1px solid #444; background:#222;"></iframe>
+                  <button type="button" onclick="openFullscreen('preview-{{ course.id }}')" style="position:absolute; top:10px; right:10px; z-index:2; background:#673ab7; color:white; border:none; border-radius:4px; padding:4px 10px; cursor:pointer;">Full Screen</button>
+                </div>
+<script>
+function openFullscreen(iframeId) {
+  var iframe = document.getElementById(iframeId);
+  if (iframe.requestFullscreen) {
+    iframe.requestFullscreen();
+  } else if (iframe.mozRequestFullScreen) { /* Firefox */
+    iframe.mozRequestFullScreen();
+  } else if (iframe.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+    iframe.webkitRequestFullscreen();
+  } else if (iframe.msRequestFullscreen) { /* IE/Edge */
+    iframe.msRequestFullscreen();
+  }
+}
+</script>
+              {% elif course.file_type in ['docx', 'pptx'] %}
+                <div style="margin:10px 0; color:#b388ff;">Preview not supported. Please download to view.</div>
+              {% endif %}
+              <div><a href="{{ url_for('static', filename='uploads/' + course.file_name) }}" download>Download ({{ course.file_type|upper }})</a></div>
+            {% endif %}
+            <div style="font-size:0.8em; color:#888;">Created: {{ course.created_at.strftime('%d-%m-%Y %H:%M') }}</div>
+          </li>
+        {% endfor %}
+        </ul>
+      {% else %}
+        <p>No courses available yet.</p>
+      {% endif %}
     </div>
 
     
@@ -639,12 +678,13 @@
 
   let currentChatUser = null;
 
+
   // Load chat users from backend chat_data passed in template (dict keyed by username)
-  const chatData = {{ chat_data | tojson }};
+  const chatData = JSON.parse('{{ chat_data | tojson | safe }}');
   const loggedInUser = "{{ user.username }}";
 
   // Fill chat list with users you chatted with or all users
-  const allUsers = {{ users|tojson }};
+  const allUsers = JSON.parse('{{ users|tojson | safe }}');
   const chattedUsers = Object.keys(chatData);
   chattedUsers.sort();
 

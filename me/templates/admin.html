@@ -29,14 +29,44 @@
           <a class="button" href="/approve/{{ user.username }}">Approve</a>
         {% endif %}<br>
         <small>{{ user.bio }}</small>
+        {% if user.username != 'admin' %}
+        <form method="POST" action="/delete_user/{{ user.username }}" style="display:inline;">
+          <button type="submit" class="button" style="background:#e74c3c;">Delete</button>
+        </form>
+        {% endif %}
       </div>
     {% endfor %}
 
     <h2>Teams:</h2>
     {% for team in teams %}
       <div class="user">
-        <strong>{{ team }}</strong>
+        <strong>{{ team.name }}</strong> (Owner: {{ team.owner_username }})
       </div>
+    {% endfor %}
+
+    <h2>Add Course</h2>
+    <form method="POST" action="/add_course" enctype="multipart/form-data">
+      <input type="text" name="title" placeholder="Course Title" required style="width: 100%; margin-bottom: 8px;" />
+      <textarea name="content" placeholder="Course Content" required style="width: 100%; height: 80px; margin-bottom: 8px;"></textarea>
+      <input type="file" name="course_file" accept=".pdf,.docx,.pptx,.txt" style="margin-bottom:8px;" />
+      <button type="submit" class="button">Add Course</button>
+    </form>
+
+    <h2>Courses:</h2>
+    {% for course in courses %}
+      <div class="user">
+        <strong>{{ course.title }}</strong><br>
+        <small>{{ course.content[:120] }}{% if course.content|length > 120 %}...{% endif %}</small>
+        {% if course.file_name %}
+          <div><a href="{{ url_for('static', filename='uploads/' + course.file_name) }}" target="_blank">Download ({{ course.file_type|upper }})</a></div>
+        {% endif %}
+        <div style="font-size: 0.8em; color: #aaa;">Created: {{ course.created_at.strftime('%d-%m-%Y %H:%M') }}</div>
+        <form method="POST" action="/delete_course/{{ course.id }}" style="display:inline;">
+          <button type="submit" class="button" style="background:#e74c3c;">Delete</button>
+        </form>
+      </div>
+    {% else %}
+      <div>No courses yet.</div>
     {% endfor %}
   </div>
 </body>
