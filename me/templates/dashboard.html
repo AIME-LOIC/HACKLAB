@@ -505,7 +505,7 @@
     
     <div id="dashboard" class="page active">
       <h1>Welcome back, {{ user.username }}</h1>
-      <p>{{ user.bio or 'No bio available.' }}</p>
+      <!-- <p>{{ user.bio or 'No bio available.' }}</p> -->
       <h2>Courses</h2>
       {% if courses %}
         <ul style="list-style:none; padding:0;">
@@ -585,7 +585,7 @@ function openFullscreen(iframeId) {
     </div>
 
     <div id="team" class="page">
-      <h3>Create or Join a Team</h3>
+      <h3>Create a Team</h3>
       <form id="createTeamForm">
         <input type="text" id="teamNameInput" placeholder="Enter Team Name..." required />
         <button type="submit">Create Team</button>
@@ -595,6 +595,9 @@ function openFullscreen(iframeId) {
         <input type="text" id="teamLink" readonly />
         <button onclick="copyTeamLink()">Copy</button>
       </div>
+      <hr>
+      <h3>Join an Existing Team</h3>
+      <ul id="allTeamsList"></ul>
     </div>
 
     <div id="profile" class="page">
@@ -691,25 +694,21 @@ function openFullscreen(iframeId) {
   // Fill chat list with users you chatted with or all users
   let allUsers = [];
   try { allUsers = JSON.parse('{{ users|tojson | safe }}'); } catch(e) { allUsers = []; }
-  const chattedUsers = Object.keys(chatData);
-  chattedUsers.sort();
 
   function getAvatarInitial(username) {
     return username.charAt(0).toUpperCase();
   }
 
   function renderChatList() {
-    chatList.innerHTML = ''; // Clear existing list
-    const usersToDisplay = chattedUsers.length === 0 ? allUsers.map(u => u.username) : chattedUsers;
-
+    chatList.innerHTML = '';
     if (isMobile) {
-        backToChatListBtn.style.display = 'none'; // Initially hide back button
-        chatList.appendChild(backToChatListBtn); // Add it to the list container
+      backToChatListBtn.style.display = 'none';
+      chatList.appendChild(backToChatListBtn);
     }
-
-    usersToDisplay.forEach(username => {
+    allUsers.forEach(u => {
+      const username = u.username;
       const div = document.createElement('div');
-      div.classList.add('chat-item'); // Add a class for styling
+      div.classList.add('chat-item');
       div.innerHTML = `<div class="chat-item-avatar">${getAvatarInitial(username)}</div><span>${username}</span>`;
       div.onclick = () => openChat(username, div);
       chatList.appendChild(div);
@@ -856,26 +855,21 @@ function openFullscreen(iframeId) {
       searchResults.innerHTML = '<div>Please enter a search query.</div>';
       return;
     }
-
     const results = allUsers.filter(u => u.username.toLowerCase().includes(query));
     if (results.length === 0) {
       searchResults.innerHTML = '<div>No users found.</div>';
       return;
     }
-
     results.forEach(user => {
       const div = document.createElement('div');
       div.textContent = user.username;
       div.onclick = () => {
-        // Jump to chat tab and open chat with selected user
         if (isMobile) {
             document.getElementById('nav-chat-mobile').click();
         } else {
             document.getElementById('nav-chat').click();
         }
-
-        // Find chat user div or create it if not found
-        let userDiv = [...chatList.querySelectorAll('.chat-item')].find(c => c.textContent.includes(user.username)); // Check for span content
+        let userDiv = [...chatList.querySelectorAll('.chat-item')].find(c => c.textContent.includes(user.username));
         if (!userDiv) {
           userDiv = document.createElement('div');
           userDiv.classList.add('chat-item');
@@ -911,7 +905,24 @@ function openFullscreen(iframeId) {
     alert('Failed to create team');
   }
 });
-
+  // Fetch and show all teams for join requests
+  async function loadAllTeams() {
+    const res = await fetch('/teams');
+    if (!res.ok) return;
+    const html = await res.text();
+    // Parse the HTML and extract the team list
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    const teamLis = tempDiv.querySelectorAll('ul li');
+    const allTeamsList = document.getElementById('allTeamsList');
+    allTeamsList.innerHTML = '';
+    teamLis.forEach(li => {
+      allTeamsList.appendChild(li);
+    });
+  }
+  // Only load teams when Team tab is shown
+  document.getElementById('nav-team').addEventListener('click', loadAllTeams);
+  document.getElementById('nav-team-mobile').addEventListener('click', loadAllTeams);
 function shareCode() {
   const code = document.getElementById('mainCodeEditor').value;
   const recipient = prompt("Enter the username to share code with:");
