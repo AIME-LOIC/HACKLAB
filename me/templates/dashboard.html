@@ -516,13 +516,17 @@
               <div style="color:orange; font-size:0.8em;">file_name: {{ course.file_name }} | iframe src: {{ url_for('static', filename='uploads/' + course.file_name) }}</div>
               {% if course.file_type in ['pdf', 'txt'] %}
                 <div style="margin:10px 0; position:relative;">
-                  <iframe id="preview-{{ course.id }}" src="{{ url_for('static', filename='uploads/' + course.file_name) }}" style="width:100%; min-height:350px; border:1px solid #444; background:#222;"></iframe>
+                  <iframe id="preview-{{ course.id }}" src="{{ url_for('uploaded_file', filename=course.file_name) }}" style="width:100%; min-height:350px; border:1px solid #444; background:#222;"></iframe>
+                       
                   <button type="button" onclick="openFullscreen('preview-{{ course.id }}')" style="position:absolute; top:10px; right:10px; z-index:2; background:#673ab7; color:white; border:none; border-radius:4px; padding:4px 10px; cursor:pointer;">Full Screen</button>
                 </div>
               {% elif course.file_type in ['docx', 'pptx'] %}
                 <div style="margin:10px 0; color:#b388ff;">Preview not supported. Please download to view.</div>
               {% endif %}
-              <div><a href="{{ url_for('static', filename='uploads/' + course.file_name) }}" download>Download ({{ course.file_type|upper }})</a></div>
+              <div><a href="{{ url_for('uploaded_file', filename=course.file_name) }}" download>
+                          Download ({{ course.file_type|upper }})
+</a>
+</div>
             {% endif %}
             <div style="font-size:0.8em; color:#888;">Created: {{ course.created_at.strftime('%d-%m-%Y %H:%M') }}</div>
           </li>
