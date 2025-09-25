@@ -506,6 +506,7 @@
     <div id="dashboard" class="page active">
       <h1>Welcome back, {{ user.username }}</h1>
       <h2>Courses</h2>
+      {% for course in courses %}
       {% if course.file_name %}
   <div style="color:orange; font-size:0.8em;">
     File: {{ course.file_name }}
@@ -537,7 +538,7 @@
     </a>
   </div>
 {% endif %}
-
+{% endfor %}
 
       
 
