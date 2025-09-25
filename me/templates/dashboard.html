@@ -684,13 +684,13 @@
 
 
   // Load chat users from backend chat_data passed in template (dict keyed by username)
-  let chatData = {};
-  try { chatData = JSON.parse('{{ chat_data | tojson | safe }}'); } catch(e) { chatData = {}; }
+  let chatData = {{ chat_data|tojson | safe }};
+
   const loggedInUser = "{{ user.username }}";
 
   // Fill chat list with users you chatted with or all users
-  let allUsers = [];
-  try { allUsers = JSON.parse('{{ users|tojson | safe }}'); } catch(e) { allUsers = []; }
+  let allUsers = {{ users|tojson | safe }};
+
 
   function getAvatarInitial(username) {
     return username.charAt(0).toUpperCase();
@@ -786,7 +786,9 @@
     const timestampSpan = document.createElement('span');
     timestampSpan.classList.add('timestamp');
     const date = new Date(msg.timestamp); // Assuming msg.timestamp is a valid date string
-    timestampSpan.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // msg.timestamp = "25-09-2025 02:15:33"
+    timestampSpan.textContent = msg.timestamp;
+
     div.appendChild(timestampSpan);
 
     chatBox.appendChild(div);

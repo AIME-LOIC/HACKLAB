@@ -384,6 +384,26 @@ def upload_profile_pic():
 @app.route('/static/uploads/<path:filename>')
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
+@app.route('/api/teams')
+def api_teams():
+    if 'user' not in session:
+        return jsonify({'error': 'Unauthorized'}), 403
+    teams = Team.query.all()
+    return jsonify([{'id': t.id, 'name': t.name, 'invite_code': t.invite_code} for t in teams])
+@app.route('/team/<int:team_id>/request_join', methods=['POST'])
+def request_join(team_id):
+    if 'user' not in session:
+        return jsonify({'error': 'Unauthorized'}), 403
+    team = Team.query.get(team_id)
+    if not team:
+        return jsonify({'error': 'Team not found'}), 404
+
+    current_user = User.query.filter_by(username=session['user']).first()
+    if current_user not in team.members:
+        team.members.append(current_user)
+        db.session.commit()
+    return jsonify({'message': 'Join request successful'})
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='hacklab.com', port=2000)
