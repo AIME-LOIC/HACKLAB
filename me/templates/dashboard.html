@@ -514,7 +514,7 @@
   {% if course.file_type in ['pdf', 'txt'] %}
     <div style="margin:10px 0; position:relative;">
       <iframe id="preview-{{ course.id }}"
-              src="{{ url_for('static', filename='uploads/' + course.file_name) }}"
+              src="{{ url_for('static', filename='uploads/' ~ course.file_name) }}"
               style="width:100%; min-height:350px; border:1px solid #444; background:#222;">
       </iframe>
       <button type="button"
@@ -532,11 +532,12 @@
   {% endif %}
 
   <div>
-    <a href="{{ url_for('static', filename='uploads/' + course.file_name) }}" download>
+    <a href="{{ url_for('static', filename='uploads/' ~ course.file_name) }}" download>
       Download ({{ course.file_type|upper }})
     </a>
   </div>
 {% endif %}
+
 
       {% else %}
         <p>No courses available yet.</p>
