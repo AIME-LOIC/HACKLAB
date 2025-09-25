@@ -381,9 +381,9 @@ def upload_profile_pic():
     return render_template('wrong.html'), 400
 
 # Serve uploaded files from /static/uploads/ for preview/download (fix 404)
-# @app.route('/static/uploads/<path:filename>')
-# def uploaded_file(filename):
-#     return send_from_directory(UPLOAD_FOLDER, filename)
+@app.route('/static/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
 @app.route('/api/teams')
 def api_teams():
     if 'user' not in session:
